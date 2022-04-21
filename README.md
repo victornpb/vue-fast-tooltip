@@ -26,12 +26,12 @@ Headline description
 
 <!-- Output table (auto generated do not modify) -->
 
-|                          File | Module Type | Transpiled | Source Maps |                                              Import example |
-|-------------------------------|-------------|------------|-------------|-------------------------------------------------------------|
-| dist/vue-fast-tooltip.esm.mjs |         esm |         No |          No | import VueFastTooltip from 'dist/vue-fast-tooltip.esm.mjs'; |
-|  dist/vue-fast-tooltip.cjs.js |         cjs |        Yes |         Yes |                     require('dist/vue-fast-tooltip.cjs.js') |
-|  dist/vue-fast-tooltip.esm.js |         esm |        Yes |         Yes |  import VueFastTooltip from 'dist/vue-fast-tooltip.esm.js'; |
-|      dist/vue-fast-tooltip.js |         umd |        Yes |         Yes |                         require('dist/vue-fast-tooltip.js') |
+| File                          | Module Type | Transpiled | Source Maps |
+|-------------------------------|-------------|------------|-------------|
+| dist/vue-fast-tooltip.esm.mjs | esm         | No         | No          |
+| dist/vue-fast-tooltip.cjs.js  | cjs         | Yes        | Yes         |
+| dist/vue-fast-tooltip.esm.js  | esm         | Yes        | Yes         |
+| dist/vue-fast-tooltip.js      | umd         | Yes        | Yes         |
 
 <!-- END -->
 
