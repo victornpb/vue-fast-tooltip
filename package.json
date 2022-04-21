@@ -21,14 +21,14 @@
   "unpkg": "dist/vue-fast-tooltip.js",
   "globalVar": "VueFastTooltip",
   "scripts": {
-    "start": "rollup -c -w",
-    "dev": "rollup -c -w",
+    "start": "npm run watch",
     "build": "rollup -c",
-    "lint": "eslint src/**/*.js",
-    "lint:fix": "prettier-eslint src/**/*.js --write",
+    "watch": "rollup -c -w",
     "prebuild": "rimraf dist",
-    "prepublishOnly": "npm run build && git add * && git commit -m \"Updating build\"",
-    "release": "np patch --any-branch"
+    "test": "npm run lint && npm run build",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "release": "np --any-branch"
   },
   "files": [
     "dist"
