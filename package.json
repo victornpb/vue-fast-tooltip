@@ -26,8 +26,8 @@
     "watch": "rollup -c -w",
     "prebuild": "rimraf dist",
     "test": "npm run lint && npm run build",
-    "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "release": "np --any-branch"
   },
   "files": [
