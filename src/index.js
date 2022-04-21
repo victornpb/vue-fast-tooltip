@@ -1,15 +1,12 @@
-import sum from './utils/sum';
+import directive from './v-tooltip';
+const DIRECTIVE = 'tooltip';
 
-export default class FooBar {
-  str = "Hello World";
-  #p = 1;
-  constructor() {
-    console.log("FooBar" + this.str + this.#p);
-  }
-  sum(a, b) {
-    return sum(a, b);
-  }
-  #bar() {
-    return 123;
-  }
-}
+const plugin = {
+  name: DIRECTIVE,
+  install(Vue, installOptions) {
+    Vue.directive(DIRECTIVE, directive);
+  },
+  directive,
+};
+
+export default plugin;
