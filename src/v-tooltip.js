@@ -19,6 +19,9 @@ const DIRECTIVE = 'tooltip';
 const bindingsMap = new WeakMap(); // store nodes using the directive, HTMLDocument as key
 const cachedTooltipElms = new WeakMap(); // the actual tooltip elements, one per document
 
+const scrollingTooltipElms = new Set();
+const ENABLE_SCROLL_HANDLER = true;
+
 /**
  * Creates the actual tooltip element
  * at this point it is not appended to the document.
@@ -159,13 +162,28 @@ function handlerHover(_event) {
   const data =  bindingsMap.get(el);
   if (!data.isVisible) {
     data.tooltipElm = showTooltip(el, data);
+    el.addEventListener('mouseleave', handlerLeave, { passive: true, once: true });
+    el.addEventListener('blur', handlerLeave, { passive: true, once: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
   }
 }
 
 function handlerLeave(_event) {
   const el = this;
   const data =  bindingsMap.get(el);
-  if (data.isVisible) hideTooltip(el, data);
+  if (data.isVisible) {
+    hideTooltip(el, data);
+    el.removeEventListener('mouseleave', handlerLeave, { passive: true });
+    el.removeEventListener('blur', handlerLeave, { passive: true });
+  }
+}
+
+function handleScroll(_event) {
+  const el = this;
+  const data = bindingsMap.get(el);
+  if (data.isVisible) {
+    showTooltip(el, data);
+  }
 }
 
 function newBinding(data) {
@@ -180,11 +198,8 @@ function newBinding(data) {
 export default {
   bind(el, data) {
     bindingsMap.set(el, newBinding(data));
-
-    el.addEventListener('mouseenter', handlerHover);
-    el.addEventListener('mouseleave', handlerLeave);
-    el.addEventListener('focus', handlerHover);
-    el.addEventListener('blur', handlerLeave);
+    el.addEventListener('mouseenter', handlerHover, { passive: true});
+    el.addEventListener('focus', handlerHover, { passive: true});
   },
   update(el, data) {
     const binding =  bindingsMap.get(el);
@@ -196,10 +211,10 @@ export default {
     if (data.isVisible) hideTooltip(el, data);
 
     // cleanup event listeners
-    el.removeEventListener('mouseenter', handlerHover);
-    el.removeEventListener('mouseleave', handlerLeave);
-    el.removeEventListener('focus', handlerHover);
-    el.removeEventListener('blur', handlerLeave);
+    el.removeEventListener('mouseenter', handlerHover, { passive: true });
+    el.removeEventListener('focus', handlerHover, { passive: true });
+    el.removeEventListener('mouseleave', handlerLeave, { passive: true });
+    el.removeEventListener('blur', handlerLeave, { passive: true });
 
     bindingsMap.delete(el);
   },
