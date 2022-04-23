@@ -16,7 +16,7 @@
 
 const DIRECTIVE = 'tooltip';
 
-const bindingsMap = new WeakMap(); // store nodes using the directive, HTMLDocument as key
+const stateMap = new WeakMap(); // store nodes using the directive, HTMLDocument as key
 const cachedTooltipElms = new WeakMap(); // the actual tooltip elements, one per document
 
 const scrollingTooltipElms = new Set();
@@ -87,21 +87,23 @@ function grabTooltip(doc = document) {
  * it will lazily create a tooltipElement or reuse an existing one
  * It will smartly position it relative to the element ensuring it within the viewport
  */
-function showTooltip(el, binding) {
+function showTooltip(el, state) {
 
-  const data = binding.data;
+  const binding = state.binding;
 
   // use the title attribute as fallback for the value
   // store it in a data attribute so
-  if (!data.value && el.hasAttribute('title')) {
-    el.setAttribute('data-tooltip', el.getAttribute('title'));
+  if (binding.value) {
+    state.content = binding.value;
+  } else if (el.title) {
+    state.content = el.title;
     el.removeAttribute('title'); // remove title so it doesn't have native tooltips
   }
 
   // Create a tooltip element or reuse the previous one
   const doc = el.ownerDocument;
-  const tooltipElm = binding.tooltipElm ?? grabTooltip(doc);
-  binding.tooltipElm = tooltipElm; // store reference so we can hide it directly
+  const tooltipElm = state.tooltipElm ?? grabTooltip(doc);
+  state.tooltipElm = tooltipElm; // store reference so we can hide it directly
 
   // The tooltip is already in the document, but not visible.
   // It needs to be be a block, and be inside the screen for it to have dimensions.
@@ -110,18 +112,18 @@ function showTooltip(el, binding) {
   tooltipElm.style.display = 'block';
   tooltipElm.style.top = `${0}px`;
   tooltipElm.style.left = `${0}px`;
-  tooltipElm.innerText = data.value ?? el.getAttribute('data-tooltip');
+  tooltipElm.innerText = state.content;
 
   // Get dimensions and positioning of target and tooltip
   const tooltipRect = tooltipElm.getBoundingClientRect();
   const targetRect = el.getBoundingClientRect();
 
   // set tooltip on top center of target
-  let y = targetRect.top - binding.margin - tooltipRect.height;
+  let y = targetRect.top - state.margin - tooltipRect.height;
   let x = targetRect.left + targetRect.width / 2 - tooltipRect.width / 2;
 
   // is tooltip above screen? move it below the target
-  if (y < 0) y = targetRect.bottom + binding.margin;
+  if (y < 0) y = targetRect.bottom + state.margin;
   // is tooltip-left-side off screen? align with target-left-side
   if (x < 0) x = targetRect.left;
   // is tooltip-right-side off screen? align with target-right-side
@@ -138,77 +140,70 @@ function showTooltip(el, binding) {
 
   // Show tooltip
   tooltipElm.style.opacity = 1;
-  binding.isVisible = true;
+  state.isVisible = true;
 
   return tooltipElm;
 }
 
-function hideTooltip(el, data) {
-  const tooltipElm = data.tooltipElm;
+function hideTooltip(el, state) {
+  const tooltipElm = state.tooltipElm;
   if (tooltipElm !== undefined && tooltipElm.parentNode) {
     tooltipElm.style.display = 'none';
     tooltipElm.style.opacity = 0;
     tooltipElm.setAttribute('aria-hidden', 'true');
     el.removeAttribute('aria-describedby');
   } else {
-    // tooltip element removed from the DOM
+    // tooltip element removed from the DOM, we can skip hiding it
   }
-  data.tooltipElm = undefined;
-  data.isVisible = false;
+  state.tooltipElm = undefined;
+  state.isVisible = false;
 }
 
 function handlerHover(_event) {
   const el = this;
-  const data =  bindingsMap.get(el);
-  if (!data.isVisible) {
-    data.tooltipElm = showTooltip(el, data);
+  const state =  stateMap.get(el);
+  if (!state.isVisible) {
+    state.tooltipElm = showTooltip(el, state);
     el.addEventListener('mouseleave', handlerLeave, { passive: true, once: true });
     el.addEventListener('blur', handlerLeave, { passive: true, once: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
   }
 }
 
 function handlerLeave(_event) {
   const el = this;
-  const data =  bindingsMap.get(el);
-  if (data.isVisible) {
-    hideTooltip(el, data);
+  const state = stateMap.get(el);
+  if (state.isVisible) {
+    hideTooltip(el, state);
     el.removeEventListener('mouseleave', handlerLeave, { passive: true });
     el.removeEventListener('blur', handlerLeave, { passive: true });
   }
 }
 
-function handleScroll(_event) {
-  const el = this;
-  const data = bindingsMap.get(el);
-  if (data.isVisible) {
-    showTooltip(el, data);
-  }
-}
 
-function newBinding(data) {
+function newState(binding) {
   return {
-    isVisible: false,
+    isVisible: false, // current state of this Node (used for skipping doing unneeded work)
+    tooltipElm: undefined, // reference to the current tooltip element (lazy)
+    content: undefined, // the content of the tooltip (lazy)
+    binding: binding, // directive binding object
     margin: 5,
-    tooltipElm: undefined,
-    data: data,
   };
 }
 
 export default {
-  bind(el, data) {
-    bindingsMap.set(el, newBinding(data));
+  bind(el, binding) {
+    stateMap.set(el, newState(binding));
     el.addEventListener('mouseenter', handlerHover, { passive: true});
     el.addEventListener('focus', handlerHover, { passive: true});
   },
-  update(el, data) {
-    const binding =  bindingsMap.get(el);
-    binding.data = data;
-    if (binding.isVisible) showTooltip(el, binding);
+  update(el, binding) {
+    const state =  stateMap.get(el);
+    state.binding = binding;
+    if (state.isVisible) showTooltip(el, state);
   },
-  unbind(el, _data) {
-    const data =  bindingsMap.get(el);
-    if (data.isVisible) hideTooltip(el, data);
+  unbind(el, _binding) {
+    const state = stateMap.get(el);
+    if (state.isVisible) hideTooltip(el, state);
 
     // cleanup event listeners
     el.removeEventListener('mouseenter', handlerHover, { passive: true });
@@ -216,6 +211,6 @@ export default {
     el.removeEventListener('mouseleave', handlerLeave, { passive: true });
     el.removeEventListener('blur', handlerLeave, { passive: true });
 
-    bindingsMap.delete(el);
+    stateMap.delete(el);
   },
 };
