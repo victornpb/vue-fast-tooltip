@@ -7,7 +7,9 @@
 [![Coverage Status](https://img.shields.io/coveralls/victornpb/vue-fast-tooltip.svg?style=flat-square)](https://coveralls.io/github/victornpb/vue-fast-tooltip)
 [![NPM](https://img.shields.io/npm/dt/vue-fast-tooltip.svg?style=flat-square)](https://www.npmjs.com/package/vue-fast-tooltip)
 
-Headline description
+![vue-fast-tooltip](https://user-images.githubusercontent.com/3372598/175796940-c77fa09c-8a44-464c-be43-911a3b9145e7.jpg)
+
+A High performance Tooltip implementation for your Vue App. You can render thousands of tooltips. Much faster than v-tooltip Vuetify component.
 
 ## Installation
 
